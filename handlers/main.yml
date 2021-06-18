@@ -1,0 +1,20 @@
+---
+- name: restart ntpd
+  service:
+    name: ntpd
+    state: restarted
+
+- name: restart chronyd
+  service:
+    name: chronyd
+    state: restarted
+
+- name: restart crond
+  service:
+    name: crond
+    state: restarted
+
+- name: chrony force sync
+  command: chronyc -a burst '4/4'
+  listen: restart chronyd
+...

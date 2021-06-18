@@ -1,0 +1,14 @@
+{{ ansible_managed | comment }}
+{% if ntp_server is defined %}
+{% for ntp_server in ntp_servers -%}
+server {{ ntp_server }} prefer iburst
+{% endfor %}
+{% else %}
+pool {{ ntp_pool }} iburst
+{% endif %}
+keyfile /etc/chrony.keys
+driftfile /var/lib/chrony/drift
+logdir /var/log/chrony
+makestep 0.1 -1
+maxupdateskew 100.0
+rtcsync

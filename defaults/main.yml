@@ -1,0 +1,5 @@
+---
+molecule_test: false
+ntp_timezone: "Europe/Amsterdam"
+ntp_pool: ntp.ubuntu.com
+...

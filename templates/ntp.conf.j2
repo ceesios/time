@@ -1,0 +1,17 @@
+{{ ansible_managed | comment }}
+tinker panic 0
+disable monitor
+
+restrict 127.0.0.1
+
+{% if ntp_server is defined %}
+{% for ntp_server in ntp_servers -%}
+server {{ ntp_server }} prefer iburst
+{% endfor %}
+{% else %}
+pool {{ ntp_pool }} iburst
+{% endif %}
+
+driftfile /var/lib/ntp/drift
+
+fudge 127.127.1.0 stratum 10

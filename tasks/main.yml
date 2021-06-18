@@ -1,0 +1,99 @@
+---
+
+- name: set timezone to Europe/Amsterdam
+  timezone:
+    name: Europe/Amsterdam
+  tags:
+    - ntp
+    - chrony
+    - timezone
+
+- name: install chrony for newer distros
+  block:
+    - name: install chrony packages
+      package:
+        name:
+          - chrony
+          - tzdata
+        state: present
+      register: chrony_install
+      retries: 5
+      until: chrony_install is success
+      tags: chrony
+
+    - name: ensure chrony config
+      template:
+        src: chrony.conf.j2
+        dest: /etc/chrony.conf
+        owner: root
+        group: root
+        mode: 0644
+      notify: restart chronyd
+
+    - name: ensure chrony is running | Debian
+      service:
+        name: chrony
+        state: started
+      tags: chrony
+      when: ansible_os_family == 'Debian'
+
+    - name: ensure chronyd is running | RedHat
+      service:
+        name: chronyd
+        state: started
+        enabled: true
+      tags:
+        - chrony
+      when: ansible_os_family == 'RedHat'
+  when: (ansible_os_family == 'Debian' and ansible_distribution_major_version >= '18') or (ansible_os_family == 'RedHat' and ansible_distribution_major_version >= '8')
+  tags: chrony
+
+- name: install ntp for older distros
+  block:
+    - name: install ntp packages
+      package:
+        name:
+          - ntp
+          - ntpdate
+          - tzdata
+        state: present
+      register: ntp_install
+      retries: 5
+      notify: restart ntpd
+      until: ntp_install is success
+      tags: ntp
+
+    - name: ensure ntp config
+      template:
+        src: ntp.conf.j2
+        dest: /etc/ntp.conf
+        owner: root
+        group: root
+        mode: 0644
+      notify: restart ntpd
+
+    - name: Set ntp clock sync
+      command: ntpd -gq
+      when: ntp_install is changed
+      ignore_errors: yes
+      failed_when: False
+      tags: ntp
+
+    - name: ensure ntp is running | Debian
+      service:
+        name: ntp
+        state: started
+        enabled: true
+      tags: ntp
+      when: ansible_os_family == 'Debian'
+
+    - name: ensure ntpd is running | RedHat
+      service:
+        name: ntpd
+        state: started
+        enabled: true
+      tags:
+        - ntp
+      when: ansible_os_family == 'RedHat'
+  when: (ansible_os_family == 'Debian' and ansible_distribution_major_version < '18') or (ansible_os_family == 'RedHat' and ansible_distribution_major_version < '8')
+  tags: ntp

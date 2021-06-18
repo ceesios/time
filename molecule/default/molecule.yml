@@ -1,0 +1,26 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: docker
+lint: |
+  set -e
+  yamllint -c .yamllint .
+  ansible-lint -c .ansible-lint . -v
+platforms:
+  - name: instance
+    # image: registry.access.redhat.com/ubi8/ubi-init
+    # Packages needed are non-UBI content
+    image: ubuntu:latest
+    privileged: true
+    volumes:
+      - "/sys/fs/cgroup:/sys/fs/cgroup:rw"
+    command: "/usr/sbin/init"
+    tty: True
+    env:
+      container: docker
+provisioner:
+  name: ansible
+verifier:
+  name: ansible
+...
